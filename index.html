@@ -81,9 +81,43 @@
       </div> -->
 			
 			<div 
-			ng-view class="flex">
+			ng-view 
+			class="flex">
 			</div>
     </main>
+
+		<div 
+			id='textAreaDiv' 
+			class="warper"
+		>
+			<textarea 
+				rows="10" cols="50"
+			>
+			</textarea>
+		</div>	
+
+		<form>
+			<label for="searchText">Looking for:</label>
+			Search criteria: 
+			<!-- prevent default on enter/submit form 
+			event.preventDefault()
+			--> 
+			<input 
+				id='goSearchInput'
+				title='type whatever you are looking for'
+				type="text" 
+				name="searchText"
+				placeholder="Looking for..."
+				onsubmit="console.info('onsubmit input event')"
+			><br />
+		</form>
+		<button 
+			id='goSearchButton'
+			type="button"
+			onclick="
+				goSearch();	
+			"
+		>Go Search</button>	
 		
 		<!-- Vendor libraries -->
 		<!-- In production use:
