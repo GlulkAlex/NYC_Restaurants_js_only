@@ -1,7 +1,8 @@
 'use strict';
 
 //* Global scope -- not good
-var arrayOf_NY_Restaurants = [];//* apparently - functions goes first 
+var arrayOf_NY_Restaurants = [],//* apparently - functions goes first ?
+		xhrResponseText = '';//* xhr must be in browser cache
 
 //var textAreaText = function showResponceText(serverResponceText) {};
 
@@ -28,6 +29,7 @@ function loadFromFile(someUrl) {
 	//* somehow equivalent to '.onload' event
 	//* may use anonymous function
 	// request.onload = function() {
+	//* 'callBackFunction' on '.onload' event 
 	request.onload = requestOnload; //* add () or not ?
 	//* using outer (for self) scope
 	function requestOnload(returnedParameter) {
@@ -69,6 +71,11 @@ function loadFromFile(someUrl) {
 			// showResponceText(request.responseText.slice(0, 255).split("\n")[1]);//* fast
 			// showResponceText(request.responseText.split("\n")[23111]);//* fast
 			showResponceText(request.responseText);//* return value outside, from event
+			if (xhrResponseText === '') {
+				xhrResponseText = request.responseText;
+			} else {
+				
+			}
 			/*
 			Numeric Sort
 				The sort() method 
@@ -187,7 +194,10 @@ document.addEventListener(
 function showResponceText(serverResponceText) {
 	var someNY_Restaurants = '';
 	
-	arrayOf_NY_Restaurants = serverResponceText.split("\n");//* global (.window or .document)
+	if (arrayOf_NY_Restaurants.length > 0) {
+	} else {
+		arrayOf_NY_Restaurants = serverResponceText.split("\n");//* global (.window or .document)
+	}
 	/*
 	var x = document.getElementById("main");
 	var y = x.getElementsByTagName("p");
@@ -203,17 +213,154 @@ function showResponceText(serverResponceText) {
 
 function goSearch() {
 	var searchInput = document.getElementById("goSearchInput").value.trim(),//'';
-			searchPosInArray = -1;//* not found
-	
+			searchPosInArray = -1,//* not found
+			//* be ware of escaping and special/reserved characters in RE 
+			//* string.replace(/([.*+?^${}()|\[\]\/\\])/g, "\\$1");
+			//* pattern_for_RE = new RegExp("(.*(" + searchInput + ")?.*)","gim"),//* /(.*searchInput?.*)/;
+			//* pattern_for_RE = new RegExp(".*" + searchInput + "?.*","gim"),//* /(.*searchInput?.*)/;
+			//*pattern_for_RE = new RegExp(".*" + searchInput + "?.*","i"),//* /(.*searchInput?.*)/;
+			pattern_for_RE, //*= new RegExp("(.*(" + searchInput + "?).*)*","im"),//* /(.*searchInput?.*)/;
+			searchExecArray = [];
+				
 	if (searchInput !== '') {//* not empty string
 		//* compare for strict match with element content  
-		searchPosInArray = arrayOf_NY_Restaurants.indexOf(searchInput, 1);
+		//* searchPosInArray = arrayOf_NY_Restaurants.indexOf(searchInput, 1);
 		if (searchPosInArray !== -1 ){
 			document
 				.getElementsByTagName("textarea")[0]
 					.innerHTML = arrayOf_NY_Restaurants[searchPosInArray];
 		}
+		
+		if (xhrResponseText !== '') {//* not empty string
+			//* /^.*chin?.*$/igm
+			//* /(^(.*ital.*)$)/igm //* found exact number of matches/size of array, but 
+			//* return array of matched elements equal to the first match
+			//* use instead
+			//* textForSearch.match(/(^(.*ital.*)$)/igm )
+			pattern_for_RE = new RegExp("(^(.*" + searchInput + ".*)$)","igm");
+			console.info("xhrResponseText - not empty");
+			//*searchExecArray = pattern_for_RE.exec(xhrResponseText);
+			/*
+			searchExecArray = pattern_for_RE
+				.exec(
+					document
+						.getElementsByTagName("textarea")[0]
+							.innerHTML
+				);*/
+				
+			/*
+			searchExecArray = document
+				.getElementsByTagName("textarea")[0]
+					.innerHTML
+						.match(pattern_for_RE);	*/
+			searchExecArray = xhrResponseText
+				.match(pattern_for_RE);				
+			
+			if (searchExecArray){//* not null
+				console.dir(searchExecArray);
+				document
+					.getElementsByTagName("textarea")[0]
+						.innerHTML = searchExecArray.slice(0, 9).join("\n");
+						//* where '9' number of - first/top elements of/in search match
+						//* for example equal to 'textarea' vertical size in strings
+			} else {
+				console.log("pattern_for_RE is:" + pattern_for_RE);
+				console.dir(searchExecArray);
+			}
+		} else {
+			console.warn("xhrResponseText - is empty !");
+		}
 	}
 };
+
+
+function xhrGet(reqUri, callback) {
+	var xhr = new XMLHttpRequest();
+
+	xhr.open("GET", reqUri, true);
+	xhr.onload = callback;
+
+	xhr.send();
+}
+
+// Perform an XMLHttpRequest to grab the
+// JSON file at url 'map'.
+/*
+xhrGet(
+	map, 
+	function (data) {
+		// Once the XMLHttpRequest loads, call the
+		// parseMapJSON method.
+		gMap.parseMapJSON(data.responseText);
+	}
+);*/
+				
+/** Using RE 
+*
+*/
+//* Escaping user input to 
+//* be treated as 
+//* a literal string 
+//* within a regular expression 
+//* can be accomplished by 
+//* simple replacement:
+
+function escapeRegExp(string){
+  return string.replace(/([.*+?^${}()|\[\]\/\\])/g, "\\$1");
+}
+/*
+baseText = "some text first some text" + 
+"\nsome text second1 some text" + 
+"\nsome text third some text" + 
+"\nsome text second2 some text"
+"some text first some text
+some text second1 some text
+some text third some text
+some text second2 some text"
+//* The exec() method 
+//* executes a search for 
+//* a match in a specified string. 
+//* Returns 
+//* a result array, or null.
+myArray = myRE.exec(baseText)
+["some text second1 some text"] */
+//* Using Parenthesized Substring Matches
+//* myRE = /(.*sec?.*)/g  //* () - parentheses important ! for match remembering inside RE 
+//* or
+//* myRE = /(.*sec?.*)/gm 
+//* The 'm' flag is 
+//* used to specify that 
+//* a multiline input string should be 
+//* treated as 
+//* multiple lines. 
+//* If the 'm' flag is used, 
+//* '^' and '$' match 
+//* at the start or end of any line 
+//* within the input string 
+//* instead of 
+//* the start or end of the entire string.
+//* or
+//* myRE = /(.*sec?.*)/
+//* /.*sec?.*/g
+/*
+myArray = myRE.exec(baseText)
+["some text second1 some text"]
+myArray = baseText.split(myRE)
+[
+"some text first some text
+", "
+some text third some text
+", 
+""
+]
+//* use instead
+textForSearch.match(/(^(.*ital.*)$)/igm )
+[
+	"2,restaurant #2,"NY, 45 street, 273",Italian,2", 
+	"5,restaurant #5,"NY, 50 street, 91",Italian,2", 
+	"8,restaurant #8,"NY, 152 street, 222",Italian,4", 
+	"9,restaurant #9,"NY, 120 street, 570",Italian,4"
+]
+*/
 
 
